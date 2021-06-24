@@ -17,14 +17,16 @@ def decrypt(encrypted_url):
         logging.exception("Failed to decrypt URL with KMS")
 
 def asg_notification(message, regions):
+    state = 'danger' if message.get("StatusCode", "") == 'Failed' else 'good'
     return {
-        "color": 'good',
+        "color": state,
         "fallback": "ASG {} event".format(message['Description']),
         "fields": [
             { "title": "account", "value": message.get('AccountId', ""), "short": True },
             { "title": "progress", "value": message.get('Progress', ""), "short": True },
             { "title": "description", "value": message.get('Description', ""), "short": True },
-            { "title": "asg name", "value": message.get('AutoScalingGroupName', ""), "short": True }
+            { "title": "asg name", "value": message.get('AutoScalingGroupName', ""), "short": True },
+            { "title": "status code", "value": message.get('StatusCode', ""), "short": True }
         ]
     }
 
@@ -312,15 +314,25 @@ def notify_slack(subject, message, region):
             notification = deployment_notification(message, region)
             payload['text'] = "AWS Deployment - " + message["detail-type"]
             payload['attachments'].append(notification)
+        else:
+            payload['text'] = "AWS notification"
+            payload['attachments'].append(default_notification(subject, message))
     elif "Origin" in message:
-        if (message['Origin'] or message['Destination'] == "AutoScalingGroup"):
+        asgstates = ['Launching', 'Terminating']
+        if (message.get('AutoScalingGroupName', "") != "") and (any(state in message.get('Description', "") for state in asgstates)):
             notification = asg_notification(message, region)
+            event_type = ""
             if ("Terminating" in message.get('Description', "")):
                 event_type = "terminating"
+                payload['text'] = "AWS ASG notification - " + event_type
+                payload['attachments'].append(notification)
             elif ("Launching" in message.get('Description', "")):
                 event_type = "launching"
-            payload['text'] = "AWS ASG notification - " + event_type
-            payload['attachments'].append(notification)
+                payload['text'] = "AWS ASG notification - " + event_type
+                payload['attachments'].append(notification)
+        else:
+            payload['text'] = "AWS notification"
+            payload['attachments'].append(default_notification(subject, message))
     else:
         payload['text'] = "AWS notification"
         payload['attachments'].append(default_notification(subject, message))
