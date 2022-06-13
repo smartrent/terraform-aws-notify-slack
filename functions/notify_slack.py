@@ -24,9 +24,9 @@ def ecr_notification(message, region):
         "fields": [
             { "title": "Status", "value": message.get('detail', {}).get('scan-status', ""), "short": True },
             { "title": "Repo", "value": message.get('detail', {}).get('repository-name', ""), "short": True },
-            { "title": "Tags", "value": message['image-tags'][0], "short": True },
+            { "title": "Tags", "value": message.get('detail', {}).get('image-tags', []), "short": True },
             { "title": "SHA", "value": message.get('detail', {}).get('image-digest', ""), "short": True },
-            { "title": "Findings", "value": message['finding-severity-counts'], "short": True }
+            { "title": "Findings", "value": message.get('detail', {}).get('finding-severity-counts', {}), "short": True }
         ]
     }        
 
