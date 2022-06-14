@@ -18,8 +18,6 @@ def decrypt(encrypted_url):
 
 def ecr_notification(message, region):
     state = 'danger' if message.get('detail', {}).get('scan-status', "") == 'FAILED' else 'good'
-    findings = message.get('detail', {}).get('finding-severity-counts', {})
-    list = list(findings.items())
     return {
         "color": state,
         "fallback": "ECR {} event".format(message['detail']),
@@ -28,7 +26,7 @@ def ecr_notification(message, region):
             { "title": "Repo", "value": message.get('detail', {}).get('repository-name', ""), "short": True },
             { "title": "Tags", "value": ",".join(message.get('detail', {}).get('image-tags', [])), "short": True },
             { "title": "SHA", "value": message.get('detail', {}).get('image-digest', ""), "short": True },
-            { "title": "Findings", "value": ",".join(list) }
+            { "title": "CRITICAL FINDINGS", "value": message.get('detail', {}).get('finding-severity-counts', {}).get('CRITICAL', ""), "short": True }
         ]
     }        
 
