@@ -26,11 +26,11 @@ def ecr_notification(message, region):
             { "title": "Repo", "value": message.get('detail', {}).get('repository-name', ""), "short": True },
             { "title": "Tags", "value": ",".join(message.get('detail', {}).get('image-tags', [])), "short": True },
             { "title": "SHA", "value": message.get('detail', {}).get('image-digest', ""), "short": True },
-            { "title": "CRITICAL Vulnerability", "value": message.get('detail', {}).get('finding-severity-counts', {}).get('CRITICAL', ""), "short": True },
-            { "title": "HIGH Vulnerability", "value": message.get('detail', {}).get('finding-severity-counts', {}).get('HIGH', ""), "short": True },
+            { "title": "CRITICAL", "value": message.get('detail', {}).get('finding-severity-counts', {}).get('CRITICAL', ""), "short": True },
+            { "title": "HIGH", "value": message.get('detail', {}).get('finding-severity-counts', {}).get('HIGH', ""), "short": True },
             {
                 "title": "Link to Scan Results",
-                "value": "console.aws.amazon.com/ecr/repositories/private/" + message['Account'] + "/" + message.get('detail', {}).get('repository-name', "") + "/image" + message.get('detail', {}).get('image-digest', "") + "/scan-results/?region=" + region,
+                "value": "https://console.aws.amazon.com/ecr/repositories/private/" + message['Account'] + "/" + message.get('detail', {}).get('repository-name', "") + "/image" + message.get('detail', {}).get('image-digest', "") + "/scan-results/?region=" + region,
                 "short": False
             }
         ]
@@ -222,13 +222,6 @@ def default_notification(subject, message):
 def filter_message_from_slack(message):
     if message.get('source', "") == "aws.iam" and message.get('detail', {}).get('eventName', '') in ["GenerateCredentialReport", "GenerateServiceLastAccessedDetails", "CreateServiceLinkedRole"]:
       return True
-    elif message.get('source', "") == "aws.ecr":
-      if message.get('detail', {}).get('finding-severity-counts', {}).get('CRITICAL', "") != "":
-        return False
-      elif message.get('detail', {}).get('finding-severity-counts', {}).get('HIGH', "") != "":
-        return False
-      else:
-        return True
     elif message.get('source', "") == "aws.rds":
       if message.get('detail', {}).get('Message', '').startswith("Snapshot succeeded"):
         return True
