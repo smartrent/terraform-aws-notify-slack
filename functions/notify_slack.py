@@ -17,7 +17,7 @@ def decrypt(encrypted_url):
         logging.exception("Failed to decrypt URL with KMS")
 
 def ecr_notification(message, region):
-    state = 'danger' if message.get('detail', {}).get('scan-status', "") == 'FAILED' else 'good'
+    state = 'danger' if message.get('detail', {}).get('scan-status', "") == 'FAILED' else 'warning'
     return {
         "color": state,
         "fallback": "ECR {} event".format(message['detail']),
@@ -222,6 +222,13 @@ def default_notification(subject, message):
 def filter_message_from_slack(message):
     if message.get('source', "") == "aws.iam" and message.get('detail', {}).get('eventName', '') in ["GenerateCredentialReport", "GenerateServiceLastAccessedDetails", "CreateServiceLinkedRole"]:
       return True
+    elif message.get('source', "") == "aws.ecr":
+      if message.get('detail', {}).get('finding-severity-counts', {}).get('CRITICAL', "") != 0:
+        return False
+      elif message.get('detail', {}).get('finding-severity-counts', {}).get('HIGH', "") != 0:
+        return False
+      else:
+        return True
     elif message.get('source', "") == "aws.rds":
       if message.get('detail', {}).get('Message', '').startswith("Snapshot succeeded"):
         return True
