@@ -225,8 +225,6 @@ def filter_message_from_slack(message):
     elif message.get('source', "") == "aws.ecr":
       if message.get('detail', {}).get('finding-severity-counts', {}).get('CRITICAL', "") != 0:
         return False
-      elif message.get('detail', {}).get('finding-severity-counts', {}).get('HIGH', "") != 0:
-        return False
       else:
         return True
     elif message.get('source', "") == "aws.rds":
