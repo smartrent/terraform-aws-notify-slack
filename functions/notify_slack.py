@@ -27,7 +27,7 @@ def ecr_notification(message, region):
             { "title": "Tags", "value": ",".join(message.get('detail', {}).get('image-tags', [])), "short": True },
             { "title": "SHA", "value": message.get('detail', {}).get('image-digest', ""), "short": True },
             { "title": "CRITICAL", "value": message.get('detail', {}).get('finding-severity-counts', {}).get('CRITICAL', ""), "short": True },
-            { "title": "HIGH", "value": message.get('detail', {}).get('finding-severity-counts', {}).get('HIGH', ""), "short": True },
+            { "title": "HIGH", "value": message.get('detail', {}).get('finding-severity-counts', {}).get('HIGH', "0"), "short": True },
             {
                 "title": "Link to Scan Results",
                 "value": "https://console.aws.amazon.com/ecr/repositories/private/" + message['account'] + "/" + message.get('detail', {}).get('repository-name', "") + "/image/" + message.get('detail', {}).get('image-digest', "") + "/scan-results/?region=" + region,
@@ -223,7 +223,7 @@ def filter_message_from_slack(message):
     if message.get('source', "") == "aws.iam" and message.get('detail', {}).get('eventName', '') in ["GenerateCredentialReport", "GenerateServiceLastAccessedDetails", "CreateServiceLinkedRole"]:
       return True
     elif message.get('source', "") == "aws.ecr":
-      if message.get('detail', {}).get('finding-severity-counts', {}).get('CRITICAL', "") != 0:
+      if message.get('detail', {}).get('finding-severity-counts', {}).get('CRITICAL', "0") != 0:
         return False
       else:
         return True
