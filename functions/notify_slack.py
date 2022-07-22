@@ -222,6 +222,7 @@ def systems_manager(message, region):
       { "title": "user", "value": message.get('detail', {}).get('userIdentity',{}).get('arn', ""), "short": True },
       { "title": "message", "value": message.get('detail', {}).get('eventName', ""), "short": True },
       { "title": "sessionId", "value": message.get('detail', {}).get('requestParameters', {}).get('sessionId', ""), "short": True },
+      { "title": "instance", "value": message.get('detail', {}).get('requestParameters', {}).get('target', ""), "short": True },
       { "title": "time", "value": message['time'], "short": True}
     ]
   }
