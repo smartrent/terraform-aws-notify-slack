@@ -385,6 +385,14 @@ def notify_slack(subject, message, region):
             notification = iam_notification(message, region)
             payload['text'] = "AWS IAM notification - " + message["detail-type"]
             payload['attachments'].append(notification)
+        elif (message['source'] == "aws.dms"):
+            notification = dms_notification(message, region)
+            payload['text'] = "AWS DMS notification - " + message["detail-type"]
+            payload['attachments'].append(notification)
+        elif (message['source'] == "aws.glue"):
+            notification = glue_notification(message, region)
+            payload['text'] = "AWS Glue notification - " + message["detail-type"]
+            payload['attachments'].append(notification)
         elif (message['source'] == "aws.iot"):
             notification = iot_notification(message, region)
             payload['text'] = "AWS Iot notification - " + message["detail-type"]
