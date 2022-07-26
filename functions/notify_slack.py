@@ -175,6 +175,38 @@ def rds_event_subscription_notification(message, region):
             ]
         }
 
+def glue_notification(message, region):
+    state = 'danger' if message.get('detail', {}).get('state', "") in ['FAILED', 'TIMEOUT'] else 'good'
+    fields = []
+    fields.append( { "title": "account", "value": message.get('account', ""), "short": True } )
+    if message.get('detail', {}).get('jobName', "") != "":
+      fields.append( { "title": "job", "value": message.get('detail', {}).get('jobName', ""), "short": True } )
+      fields.append( { "title": "job run", "value": message.get('detail', {}).get('jobRunId', ""), "short": True } )
+    if message.get('detail', {}).get('state', "") != "":
+      fields.append( { "title": "state", "value": message.get('detail', {}).get('state', ""), "short": True } )
+    if message.get('detail', {}).get('message', "") != "":
+      fields.append( { "title": "message", "value": message.get('detail', {}).get('message', ""), "short": True } )
+    return {
+        "color": state,
+        "fallback": "Glue {} event".format(message['detail']),
+        "fields": fields
+    }
+
+def dms_notification(message, region):
+
+    state = 'danger' if message.get('detail', {}).get('eventType', "") in ['REPLICATION_TASK_STOPPED'] else 'good'
+    fields = []
+    fields.append( { "title": "account", "value": message.get('account', ""), "short": True } )
+    fields.append( { "title": "message", "value": message.get('detail', {}).get('detailMessage', ""), "short": True } )
+    fields.append( { "title": "category", "value": message.get('detail', {}).get('category', ""), "short": True } )
+    if message.get('detail', {}).get('resourceLink', "") != "":
+      fields.append( { "title": "link", "value": message.get('detail', {}).get('resourceLink', ""), "short": True } )
+    return {
+        "color": state,
+        "fallback": "DMS {} event".format(message['detail']),
+        "fields": fields
+    }
+
 def iam_notification(message, region):
     return {
             "color": 'good',
