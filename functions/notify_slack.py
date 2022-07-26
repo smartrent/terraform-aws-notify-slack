@@ -199,8 +199,10 @@ def dms_notification(message, region):
     fields.append( { "title": "account", "value": message.get('account', ""), "short": True } )
     fields.append( { "title": "message", "value": message.get('detail', {}).get('detailMessage', ""), "short": True } )
     fields.append( { "title": "category", "value": message.get('detail', {}).get('category', ""), "short": True } )
+    if message.get('detail', {}).get('type', "") == 'REPLICATION_TASK':
+      fields.append( { "title": "task arn", "value": message.get('resources', [])[0], "short": True } )
     if message.get('detail', {}).get('resourceLink', "") != "":
-      fields.append( { "title": "link", "value": message.get('detail', {}).get('resourceLink', ""), "short": True } )
+      fields.append( { "title": "link", "value": '< {} | resource link >'.format(message.get('detail', {}).get('resourceLink', "")), "short": True } )
     return {
         "color": state,
         "fallback": "DMS {} event".format(message['detail']),
