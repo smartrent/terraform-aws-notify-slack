@@ -44,7 +44,7 @@ def inspector_notification(message, region):
     "fields": [
       { "title": "Title", "value": message.get('detail', {}).get('title', ""), "short": True },
       { "title": "Resource", "value": message['resources'][0], "short": True },
-      { "title": "severity", "value": message.get('detail', {}).get('severity', ""), "short": True },
+      { "title": "Severity", "value": message.get('detail', {}).get('severity', ""), "short": True },
       { "title": "Region", "value": message['region'], "short": True },
       { "title": "Account", "value": message.get('detail', {}).get('awsAccountId', ""), "short": True },
       { "title": "Status", "value": message.get('detail', {}).get('status', ""), "short": True },
