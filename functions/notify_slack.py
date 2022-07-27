@@ -204,7 +204,7 @@ def dms_notification(message, region):
     if message.get('detail', {}).get('resourceLink', "") != "":
       fields.append( { "title": "link", "value": '<{}|resource link>'.format(message.get('detail', {}).get('resourceLink', "")), "short": True } )
     return {
-        "mrkdwn_in": [],
+        "mrkdwn_in": ["fallback"],
         "color": state,
         "fallback": "DMS {} event".format(message['detail']),
         "fields": fields
