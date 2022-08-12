@@ -275,21 +275,21 @@ def security_hub_notification(message, region):
     state = finding['RecordState']
     resource = finding['ProductFields'].get('Resources:0/Id', "")
 
-    return {
-      "color": 'danger',
-      "fallback": "{} event".format(message['detail']),
-      "fields": [
-        { "title": "Title", "value": title, "short": True },
-        { "title": "Standard", "value": message['resources'][0], "short": True },
-        { "title": "Severity", "value": severity, "short": True },
-        { "title": "Region", "value": message['region'], "short": True },
-        { "title": "Account", "value": message.get('account', ""), "short": True },
-        { "title": "Status", "value": status, "short": True },
-        { "title": "State", "value": state, "short": True },
-        { "title": "Product", "value": product, "short": True },
-        { "title": "Resource", "value": resource, "short": True }
-      ]
-    }
+  return {
+    "color": 'danger',
+    "fallback": "{} event".format(message['detail']),
+    "fields": [
+      { "title": "Title", "value": title, "short": True },
+      { "title": "Standard", "value": message['resources'][0], "short": True },
+      { "title": "Severity", "value": severity, "short": True },
+      { "title": "Region", "value": message['region'], "short": True },
+      { "title": "Account", "value": message.get('account', ""), "short": True },
+      { "title": "Status", "value": status, "short": True },
+      { "title": "State", "value": state, "short": True },
+      { "title": "Product", "value": product, "short": True },
+      { "title": "Resource", "value": resource, "short": True }
+    ]
+  }
 
 def systems_manager(message, region):
   return {
@@ -457,9 +457,9 @@ def notify_slack(subject, message, region):
             payload['text'] = "AWS Systems Manager Notification - " + message["detail-type"]
             payload['attachments'].append(notification)
         elif (message['source'] == "aws.securityhub"):
-          notification = security_hub_notification(message, region)
-          payload['text'] = "AWS Security Hub Notification - " + message["detail-type"]
-          payload['attachments'].append(notification)
+            notification = security_hub_notification(message, region)
+            payload['text'] = "AWS Security Hub Notification - " + message["detail-type"]
+            payload['attachments'].append(notification)
         else:
             payload['text'] = "AWS notification"
             payload['attachments'].append(default_notification(subject, message))
