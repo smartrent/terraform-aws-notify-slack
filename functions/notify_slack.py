@@ -336,6 +336,11 @@ def filter_message_from_slack(message):
         return False
       else:
         return True
+    elif message.get('source', "") == "aws.inspector2":
+      if message.get('detail', {}).get('finding-severity-counts', {}).get('CRITICAL', 0) != 0:
+        return False
+      else:
+        return True
     elif message.get('source', "") == "aws.rds":
       if message.get('detail', {}).get('Message', '').startswith("Snapshot succeeded"):
         return True
