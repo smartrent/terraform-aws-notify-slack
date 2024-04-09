@@ -68,6 +68,9 @@ def inspector_notification(message, region):
   if message.get('detail', {}).get('awsAccountId', "NOTFOUND") != 'NOTFOUND':
     fields.append( { "title": "Account", "value": message.get('detail', {}).get('awsAccountId', ""), "short": True })
 
+  if 'repository' in message['resources'][0] and message.get('detail').get('image-digest', "NOTFOUND") != 'NOTFOUND' :
+   fields.append( { "title": "Link to Scan Results", "value": "https://console.aws.amazon.com/inspector/v2/home?region=" + message['region'] + "#/findings/container-image/" + urllib.parse.quote_plus(message['resources'][0] + "/" + message.get('detail').get('image-digest')) } )
+
   fields.append( { "title": "Resource", "value": message['resources'][0], "short": True })
   fields.append( { "title": "Region", "value": message['region'], "short": True })
 
