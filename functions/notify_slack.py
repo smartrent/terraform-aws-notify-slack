@@ -363,6 +363,8 @@ def filter_message_from_slack(message):
     elif message.get('source', "") == "aws.inspector2":
       if message.get('detail', {}).get('finding-severity-counts', {}).get('CRITICAL', 0) != 0:
         return False
+      elif message.get('detail', {}).get('scan-status', {}) in ["INTERNAL_ERROR", "ACCESS_DENIED"]:
+        return False
       else:
         return True
     elif message.get('source', "") == "aws.rds":
