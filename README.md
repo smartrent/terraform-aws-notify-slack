@@ -86,3 +86,6 @@ Module managed by [Anton Babenko](https://github.com/antonbabenko).
 ## License
 
 Apache 2 Licensed. See LICENSE for full details.
+<!-- BEGIN_TF_DOCS -->
+README.md updated successfully
+<!-- END_TF_DOCS -->
