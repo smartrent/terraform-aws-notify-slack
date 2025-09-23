@@ -77,3 +77,9 @@ variable "python_version" {
   type        = string
   default     = "python3.12"
 }
+
+variable "architectures" {
+  description = "The CPU architecture for the Lambda function"
+  type        = list(string)
+  default     = ["x86_64"]
+}
