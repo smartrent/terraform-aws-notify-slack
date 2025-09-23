@@ -64,6 +64,7 @@ resource "aws_lambda_function" "notify_slack" {
   runtime          = var.python_version
   timeout          = 30
   kms_key_arn      = var.kms_key_arn
+  architectures    = ["arm64"]
 
   environment {
     variables = {
