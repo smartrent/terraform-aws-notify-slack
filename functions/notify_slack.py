@@ -346,6 +346,133 @@ def systems_manager(message, region):
     "fields": fields
   }
 
+def s3_event_notification(record, region):
+    """Handle S3 Event Notifications with Records array (eventSource: aws:s3)"""
+    fields = []
+    
+    # Extract event information
+    event_name = record.get('eventName', '')
+    event_time = record.get('eventTime', '')
+    aws_region = record.get('awsRegion', region)
+    
+    # Extract S3 information
+    s3_data = record.get('s3', {})
+    bucket_info = s3_data.get('bucket', {})
+    object_info = s3_data.get('object', {})
+    bucket_name = bucket_info.get('name', '')
+    object_key = object_info.get('key', '')
+    
+    # Extract replication data
+    replication_data = record.get('replicationEventData', {})
+    
+    fields.append({ "title": "Event", "value": event_name, "short": True })
+    fields.append({ "title": "Region", "value": aws_region, "short": True })
+    fields.append({ "title": "Time", "value": event_time, "short": True })
+    
+    if bucket_name:
+        fields.append({ "title": "Bucket", "value": bucket_name, "short": True })
+    
+    if object_key:
+        fields.append({ "title": "Object Key", "value": object_key, "short": False })
+    
+    if object_info.get('size', 'NOTFOUND') != 'NOTFOUND':
+        size_bytes = object_info.get('size', 0)
+        if size_bytes < 1024:
+            size_str = f"{size_bytes} B"
+        elif size_bytes < 1024 * 1024:
+            size_str = f"{size_bytes / 1024:.2f} KB"
+        elif size_bytes < 1024 * 1024 * 1024:
+            size_str = f"{size_bytes / (1024 * 1024):.2f} MB"
+        else:
+            size_str = f"{size_bytes / (1024 * 1024 * 1024):.2f} GB"
+        fields.append({ "title": "Size", "value": size_str, "short": True })
+    
+    if object_info.get('versionId', ""):
+        fields.append({ "title": "Version ID", "value": object_info.get('versionId', ""), "short": True })
+    
+    # Replication-specific fields
+    if replication_data:
+        if replication_data.get('destinationBucket', ""):
+            dest_bucket = replication_data.get('destinationBucket', "")
+            fields.append({ "title": "Destination", "value": dest_bucket, "short": False })
+        
+        if replication_data.get('s3Operation', ""):
+            fields.append({ "title": "Operation", "value": replication_data.get('s3Operation', ""), "short": True })
+        
+        if replication_data.get('failureReason', ""):
+            failure = replication_data.get('failureReason', "")
+            fields.append({ "title": "⚠️ Failure Reason", "value": failure, "short": False })
+        
+        if replication_data.get('replicationRuleId', ""):
+            fields.append({ "title": "Rule ID", "value": replication_data.get('replicationRuleId', ""), "short": True })
+    
+    # Add S3 console link
+    if bucket_name and object_key:
+        s3_link = f"https://s3.console.aws.amazon.com/s3/object/{bucket_name}?region={aws_region}&prefix={urllib.parse.quote_plus(object_key)}"
+        fields.append({ "title": "Link to Object", "value": s3_link, "short": False })
+    elif bucket_name:
+        bucket_link = f"https://s3.console.aws.amazon.com/s3/buckets/{bucket_name}?region={aws_region}"
+        fields.append({ "title": "Link to Bucket", "value": bucket_link, "short": False })
+    
+    # Determine color based on event type
+    if 'Failed' in event_name or replication_data.get('failureReason', ""):
+        color = 'danger'
+    elif 'MissedThreshold' in event_name or 'NotTracked' in event_name:
+        color = 'warning'
+    elif 'Test' in event_name or 'AfterThreshold' in event_name:
+        color = 'good'
+    else:
+        color = 'warning'
+    
+    return {
+        "color": color,
+        "fallback": f"S3 {event_name}",
+        "fields": fields
+    }
+
+def s3_sns_notification(message, region):
+    """Handle S3 notifications that come through SNS with Service/Event/Bucket format"""
+    fields = []
+    
+    # Basic S3 event information
+    service = message.get('Service', '')
+    event = message.get('Event', '')
+    time = message.get('Time', '')
+    bucket = message.get('Bucket', '')
+    request_id = message.get('RequestId', '')
+    
+    if service:
+        fields.append({ "title": "Service", "value": service, "short": True })
+    
+    if event:
+        fields.append({ "title": "Event", "value": event, "short": True })
+    
+    if time:
+        fields.append({ "title": "Time", "value": time, "short": True })
+    
+    if bucket:
+        fields.append({ "title": "Bucket", "value": bucket, "short": True })
+        # Add link to bucket
+        bucket_link = f"https://s3.console.aws.amazon.com/s3/buckets/{bucket}?region={region}"
+        fields.append({ "title": "Link to Bucket", "value": bucket_link, "short": False })
+    
+    if request_id:
+        fields.append({ "title": "Request ID", "value": request_id, "short": True })
+    
+    # Determine color based on event type
+    if event and 'Test' in event:
+        color = 'good'
+    elif event and ('Error' in event or 'Failed' in event):
+        color = 'danger'
+    else:
+        color = 'good'
+    
+    return {
+        "color": color,
+        "fallback": f"S3 {event} event" if event else "S3 notification",
+        "fields": fields
+    }
+
 def default_notification(subject, message):
     return {
             "fallback": "A new message",
@@ -353,7 +480,34 @@ def default_notification(subject, message):
         }
 
 def filter_message_from_slack(message):
-    if message.get('source', "") == "aws.iam" and message.get('detail', {}).get('eventName', '') in ["GenerateCredentialReport", "GenerateServiceLastAccessedDetails", "CreateServiceLinkedRole"]:
+    # Filter S3 Event Notifications with Records array
+    if "Records" in message and isinstance(message.get('Records'), list) and len(message['Records']) > 0:
+      record = message['Records'][0]
+      if record.get('eventSource', '') == 'aws:s3':
+        event_name = record.get('eventName', '')
+        # Don't filter replication failures - these are critical
+        if 'Replication' in event_name and 'Failed' in event_name:
+          return False
+        # Don't filter threshold issues
+        if 'Replication' in event_name and ('MissedThreshold' in event_name or 'NotTracked' in event_name):
+          return False
+        # Filter successful replication after threshold (less critical)
+        if event_name == 'Replication:OperationReplicatedAfterThreshold':
+          return True
+        # Filter test events
+        if 'Test' in event_name:
+          return True
+        # Add other filtering logic here as needed
+        return False
+    # Filter S3 SNS notifications (Service/Event/Bucket format)
+    elif message.get('Service', "") == "Amazon S3" and message.get('Event', "") != "":
+      event = message.get('Event', '')
+      # Filter test events (uncomment if you want to see test events)
+      if event == 's3:TestEvent':
+        return True
+      # Add other S3 event filtering here as needed
+      return False
+    elif message.get('source', "") == "aws.iam" and message.get('detail', {}).get('eventName', '') in ["GenerateCredentialReport", "GenerateServiceLastAccessedDetails", "CreateServiceLinkedRole"]:
       return True
     elif message.get('source', "") == "aws.ecr":
       if message.get('detail', {}).get('finding-severity-counts', {}).get('CRITICAL', 0) != 0:
@@ -445,12 +599,8 @@ def notify_slack(subject, message, region):
         except json.JSONDecodeError as err:
             logging.exception(f'JSON decode error: {err}')
 
-    if "source" in message and filter_message_from_slack(message):
-        print("filtering message, not posting to slack")
-        print(message)
-        return
-
-    if "Event Source" in message and filter_message_from_slack(message):
+    # Check filters for different message formats
+    if filter_message_from_slack(message):
         print("filtering message, not posting to slack")
         print(message)
         return
@@ -459,6 +609,23 @@ def notify_slack(subject, message, region):
     if "AlarmName" in message:
         notification = cloudwatch_notification(message, region)
         payload['text'] = "AWS CloudWatch notification - " + message['AlarmName']
+        payload['attachments'].append(notification)
+    elif "Records" in message and isinstance(message.get('Records'), list) and len(message['Records']) > 0:
+        # Handle S3 Event Notifications with Records array
+        record = message['Records'][0]
+        if record.get('eventSource', '') == 'aws:s3':
+            notification = s3_event_notification(record, region)
+            event_name = record.get('eventName', 'notification')
+            payload['text'] = f"AWS S3 notification - {event_name}"
+            payload['attachments'].append(notification)
+        else:
+            payload['text'] = "AWS notification"
+            payload['attachments'].append(default_notification(subject, message))
+    elif "Service" in message and message.get('Service', "") == "Amazon S3" and "Event" in message:
+        # Handle S3 notifications with Service/Event/Bucket format
+        notification = s3_sns_notification(message, region)
+        event = message.get('Event', 'notification')
+        payload['text'] = f"AWS S3 notification - {event}"
         payload['attachments'].append(notification)
     elif "source" in message:
         if (message['source'] == "aws.ecs"):
