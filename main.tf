@@ -17,8 +17,8 @@ locals {
   lambda_archive  = "${path.module}/functions/notify_slack.zip"
   sns_topic_arn = element(
     concat(
-      aws_sns_topic.this.*.arn,
-      data.aws_sns_topic.this.*.arn,
+      aws_sns_topic.this[*].arn,
+      data.aws_sns_topic.this[*].arn,
       [""],
     ),
     0,
