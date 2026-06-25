@@ -65,7 +65,7 @@ jobs:
         with:
           terraform_version: ${{ needs.env_mise.outputs.terraform_version }}
       - name: terraform init
-        run: terraform -chdir="./" init -input=false -lockfile=readonly -backend=false
+        run: terraform -chdir="./" init -input=false -backend=false
       - name: terraform validate
         run: terraform -chdir="./" validate
 
@@ -84,7 +84,7 @@ jobs:
           tflint_version: v${{ needs.env_mise.outputs.tflint_version }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
       - name: terraform init
-        run: terraform -chdir="./" init -input=false -lockfile=readonly -backend=false
+        run: terraform -chdir="./" init -input=false -backend=false
       - name: tflint init
         run: tflint --init
       - name: tflint
