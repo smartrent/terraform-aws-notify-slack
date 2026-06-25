@@ -13,4 +13,4 @@ locked = true
 lockfile_platforms = ["linux-x64", "macos-arm64"]  # requires mise >= 2026.4.8
 
 [shell_alias]
-asdf = "echo \"⚠️  It looks like you're using asdf. How nostalgic! \n This project is now using mise.\n Join us in the future whenever you're ready to pick up the new hotness and drop that old and busted asdf.\" && mise"
+asdf = "echo && echo '  ⚠️  asdf deprecated. Running equivalent mise command..' && echo && mise"
