@@ -80,8 +80,8 @@ resource "aws_iam_role_policy" "lambda" {
 
   policy = element(
     concat(
-      data.aws_iam_policy_document.lambda.*.json,
-      data.aws_iam_policy_document.lambda_basic.*.json,
+      data.aws_iam_policy_document.lambda[*].json,
+      data.aws_iam_policy_document.lambda_basic[*].json,
     ),
     0,
   )
