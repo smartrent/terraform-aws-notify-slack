@@ -142,8 +142,12 @@ def ecs_notification(message, region):
 
     fields.append({ "title": "time", "value": message['time'], "short": True})
 
+    color = states.get(message.get('detail', {}).get('lastStatus', ""), "danger")
+    if message.get('detail', {}).get('stopCode', "") == 'SpotInterruption':
+      color = 'good'
+
     return {
-            "color": states.get(message.get('detail', {}).get('lastStatus', ""), "danger"),
+            "color": color,
             "fallback": "ECS {} triggered".format(message['detail']),
             "fields": fields
         }
